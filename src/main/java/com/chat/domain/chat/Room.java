@@ -2,6 +2,7 @@ package com.chat.domain.chat;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
 @Builder
 @Document(collection = "room")
 public class Room {
@@ -21,4 +23,5 @@ public class Room {
     @CreatedDate
     private LocalDateTime createdAt;
     private LocalDateTime lastMessageAt;
+    private LocalDateTime deletedAt;
 }

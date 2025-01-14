@@ -22,4 +22,5 @@ public class Participant {
     @CreatedDate
     private LocalDateTime createdAt; // 입장 시간
     private LocalDateTime lastSeenAt; // 마지막으로 메시지를 확인한 시간
+    private LocalDateTime deletedAt;
 }
