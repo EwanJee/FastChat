@@ -1,4 +1,9 @@
 package com.chat.infrastructure;
 
-public interface RoomRepository {
+import com.chat.domain.chat.Room;
+import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
+import reactor.core.publisher.Mono;
+
+public interface RoomRepository extends ReactiveMongoRepository<Room, String> {
+    Mono<Room> findByIdAndLastMessageAtNotNull(String id);
 }
