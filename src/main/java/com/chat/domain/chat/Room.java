@@ -17,6 +17,7 @@ public class Room {
     @Id
     private String id;
     private String name;
+    private String password;
     @CreatedDate
     private LocalDateTime createdAt;
     private LocalDateTime lastMessageAt;
