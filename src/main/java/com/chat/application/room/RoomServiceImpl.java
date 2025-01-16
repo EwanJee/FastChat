@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 import reactor.core.publisher.Flux;
@@ -23,15 +24,20 @@ public class RoomServiceImpl implements RoomService {
 
     private final RoomRepository roomRepository;
     private final ReactiveMongoTemplate mongoTemplate;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Mono<Room> createRoom(RequestRoomCreate request) {
         // HTML 이스케이프 처리
         String sanitizedName = HtmlUtils.htmlEscape(request.name());
 
+        // 비밀번호가 있는 경우에만 해시화
+        String encodedPassword = request.password() != null ?
+                passwordEncoder.encode(request.password()) : null;
+
         Room room = Room.builder()
                 .name(sanitizedName)
-                .password(request.password())
+                .password(encodedPassword)
                 .lastMessageAt(LocalDateTime.now())
                 .build();
 
@@ -59,7 +65,7 @@ public class RoomServiceImpl implements RoomService {
                         sink.next(true);
                         return;
                     }
-                    if (!room.getPassword().equals(password)) {
+                    if (!passwordEncoder.matches(password, room.getPassword())) {
                         sink.error(new ChatException(ErrorCode.INVALID_PASSWORD));
                         return;
                     }
