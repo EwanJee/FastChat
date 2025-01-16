@@ -13,4 +13,10 @@ public interface ParticipantRepository extends ReactiveMongoRepository<Participa
     Mono<Participant> findByRoomIdAndSessionId(String roomId, String sessionId);
 
     Mono<Void> deleteBySessionId(String sessionId);
+
+    Flux<Participant> findAllByRoomIdAndDeletedAtIsNull(String roomId);
+
+    Mono<Participant> findBySessionIdAndDeletedAtIsNull(String sessionId);
+
+    Flux<Participant> findAllBySessionIdAndDeletedAtIsNull(String sessionId);
 }
