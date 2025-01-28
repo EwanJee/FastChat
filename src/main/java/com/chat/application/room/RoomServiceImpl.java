@@ -4,8 +4,11 @@ import com.chat.application.exception.ChatException;
 import com.chat.application.exception.ErrorCode;
 import com.chat.application.room.dto.RequestRoomCreate;
 import com.chat.domain.chat.Room;
+import com.chat.domain.chat.RoomInvite;
+import com.chat.infrastructure.RoomInviteRepository;
 import com.chat.infrastructure.RoomRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -16,15 +19,21 @@ import org.springframework.web.util.HtmlUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
 public class RoomServiceImpl implements RoomService {
 
     private final RoomRepository roomRepository;
+    private final RoomInviteRepository inviteRepository;
     private final ReactiveMongoTemplate mongoTemplate;
     private final PasswordEncoder passwordEncoder;
+    private static final Duration INVITE_VALIDITY = Duration.ofHours(24);
+    @Value("${domain.url}")
+    private static final String BASE_URL = "";
 
     @Override
     public Mono<Room> createRoom(RequestRoomCreate request) {
@@ -80,5 +89,28 @@ public class RoomServiceImpl implements RoomService {
 
         return mongoTemplate.findAndModify(query, update, Room.class)
                 .switchIfEmpty(Mono.error(new ChatException(ErrorCode.ROOM_NOT_FOUND)));
+    }
+
+    @Override
+    public Mono<String> generateInviteLink(String roomId) {
+        return findRoom(roomId)
+                .flatMap(room -> {
+                    String inviteId = UUID.randomUUID().toString();
+                    RoomInvite invite = RoomInvite.builder()
+                            .id(inviteId)
+                            .roomId(roomId)
+                            .expiredAt(LocalDateTime.now().plus(INVITE_VALIDITY))
+                            .build();
+                    return inviteRepository.save(invite);
+                })
+                .map(invite -> BASE_URL + invite.getId());
+    }
+
+    @Override
+    public Mono<Room> joinByInviteLink(String inviteId) {
+        return inviteRepository.findById(inviteId)
+                .filter(invite -> invite.getExpiredAt().isAfter(LocalDateTime.now()))
+                .switchIfEmpty(Mono.error(new ChatException(ErrorCode.INVALID_INVITE)))
+                .flatMap(invite -> findRoom(invite.getRoomId()));
     }
 }

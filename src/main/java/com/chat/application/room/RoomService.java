@@ -16,4 +16,8 @@ public interface RoomService {
     Mono<Boolean> validatePassword(String roomId, String password);
 
     Mono<Room> updateLastMessageTime(String roomId);
+
+    Mono<String> generateInviteLink(String roomId);  // 24시간 유효한 초대 링크 생성
+
+    Mono<Room> joinByInviteLink(String inviteId);   // 링크로 방 정보 조회
 }
